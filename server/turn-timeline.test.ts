@@ -2,7 +2,7 @@ import { expect, test, vi } from "vitest";
 import type { PaseoApi } from "@getpaseo/client";
 import { turnTimeline } from "./turn-timeline";
 
-vi.mock("./error-report", () => ({ logFailure: vi.fn() }));
+vi.mock("./failure-log", () => ({ logFailure: vi.fn() }));
 
 const paseoWith = (refetch: (...args: unknown[]) => unknown) =>
   ({ agents: { ref: () => ({ timeline: { refetch } }) } }) as unknown as PaseoApi;

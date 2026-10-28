@@ -24,7 +24,7 @@ import {
 import { ExternalError, storedConnection, type Fetch, type StoredConnection } from "./http";
 import { adapterFor } from "./index";
 import type { Fetched, ItemRef, SearchScope } from "./types";
-import { logFailure } from "../error-report";
+import { logFailure } from "../failure-log";
 
 /**
  * External items as read-only card inputs (CONNECTORS-SPEC, EXTERNAL-TRACKER-SPEC).

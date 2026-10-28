@@ -1,6 +1,6 @@
 import { openLocalDaemon } from "./local-daemon";
 import { paseoHome } from "./service";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 /** The child session a summarizer or insight run created, and is now done with. */
 export type RemovableAgent = { id: string; archive(): Promise<unknown> };

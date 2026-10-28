@@ -23,7 +23,7 @@ import {
   type MarkSessionUnreadInput,
   type SessionReadReceipt,
 } from "../shared/session-attention";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 export class SessionReadStore {
   private tail: Promise<unknown> = Promise.resolve();

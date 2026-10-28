@@ -1,5 +1,14 @@
 # Implementation progress
 
+## Telemetry removed — 2026-10-28
+
+- User decision 2026-10-28: remove all telemetry. Deleted `server/telemetry.ts` (PostHog heartbeat, `$exception` reports), `server/paseo-version.ts`, `shared/version.ts` (only telemetry used it; `make bump` no longer writes it), `scripts/map-bundle-lines.mjs`, `docs/TELEMETRY-SPEC.md` and its verification files.
+- `server/error-report.ts` → `server/failure-log.ts`: `logFailure` only logs; the error sink, RPC error wrapper and uncaught-exception monitor are gone. The `console.error` guard test stays.
+- Removed the `telemetry` host setting, the `telemetry.status` RPC, the *Send anonymous usage data* switch (Settings → General and the tour's last page), the 1.7.0 What's new item about it and their 5 strings from every catalog.
+- Start-up deletes the old install id (`telemetry.json`, `.invalid-*` copies) from the default data folder and the host's stored switch (`removeTelemetryState`, `server/telemetry-removal.test.ts`).
+- Onboarding: no new tour copy or tip (a removed switch has nothing to announce); the tour's last page loses the switch.
+- Checks: `npm run typecheck` exit 0; `npm test` exit 0, 141 files, 1175 passed, 1 skipped; `npm run test:ci` exit 0. Not run: install/reload into a live daemon, UI check of Settings → General and the tour.
+
 ## Search (card "搜索功能") — 2026-10-27
 
 - Focus from search: a hit row opens the card at its section and item (Progress, Activity, Workpad, Ideas, Artifacts), widening Activity's last-12 window, Workpad/Artifacts pages and Ideas → Closed to reach it, then a short accent ring; the stored section choices are untouched ([DRAWER-SPEC](DRAWER-SPEC.md#focus-from-search), `client/drawer-focus.tsx`).

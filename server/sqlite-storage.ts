@@ -17,7 +17,7 @@ import {
   writeFileDurable,
   type BoardPersistence,
 } from "./board-file";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 /**
  * The board in `flowly.sqlite` (SQLITE-STORAGE-SPEC): start-up rules, the one-time move from

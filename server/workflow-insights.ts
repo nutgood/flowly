@@ -50,7 +50,7 @@ import {
   type WorkflowState,
   type WorkflowView,
 } from "../shared/workflow-insights";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 const DAY_MS = 86_400_000;
 const TICK_MS = 15 * 60_000;

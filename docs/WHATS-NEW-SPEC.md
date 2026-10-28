@@ -80,7 +80,6 @@ export const whatsNew: { version: string; items: WhatsNewItem[] }[] = [ /* 新�
 | `Gauge` | 看板打开和刷新更快，手机上尤其明显：只读概览和打开的卡片（[LOADING-R2-SPEC](LOADING-R2-SPEC.md)） | — |
 | `MonitorSmartphone` | 手机上设置改为全屏；Settings → Cards 可关闭扫光动画 | Open settings → Cards |
 | `Database` | Paseo 支持时，看板改存本地 SQLite 数据库并每天备份；Settings → Storage 可恢复备份或导出为 JSON（[SQLITE-STORAGE-SPEC](SQLITE-STORAGE-SPEC.md)） | Open settings → Storage |
-| `Activity` | 匿名使用数据：每天一次版本、开启的功能和使用次数；出错时只报 Flowly 代码里的位置；可在设置里关（[TELEMETRY-SPEC](TELEMETRY-SPEC.md)） | Open settings → General |
 
 ### 1.6.0（2026-10-24 用户确认发布 1.6.0；v1.5.0..main 已合入的部分）
 

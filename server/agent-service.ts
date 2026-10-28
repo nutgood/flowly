@@ -70,7 +70,7 @@ import { ideaLimits, isWorkStatus, legacyStatus, type Board, type Idea, type Rec
 import { isLegacyScope } from "../shared/scope";
 import { MemoryError, type MemoryService } from "./memory";
 import type { SearchService } from "./search";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 /** A project-memory refusal as the tool error agents read (PROJECT-MEMORY-SPEC §4.1). */
 function memoryToolError(e: unknown): unknown {

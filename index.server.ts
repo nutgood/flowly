@@ -2,11 +2,10 @@ import { readCardDetail, readProjectCardIndex, readProjectIdeas } from "./server
 import type { PluginServerContext } from "@getpaseo/plugin/server";
 import type { PaseoApi } from "@getpaseo/client";
 import { BoardStore, columnOrder } from "./server/store";
-import { BoardService, dataDirectory, migrateLegacyPluginData, paseoHome } from "./server/service";
-import { readPaseoVersion } from "./server/paseo-version";
+import { BoardService, dataDirectory, migrateLegacyPluginData, removeTelemetryState } from "./server/service";
 import { NativeDirectoryPicker, detectNativePicker, listDirectories } from "./server/directories";
 import * as rpc from "./shared/rpc";
-import { agentHabitsOn, developerSettings, performanceLogOn, performanceSettings, boardViewSettings, ideasSettings, languageSettings, languageSettingsValues, aiLanguageSettings, aiLanguageSettingsValues, deviceLanguageSettings, deviceLanguageValue, modelSettings, onboardingSettings, ideasSettingsValues, statusSettings, statusSettingsValues, wrapupSettings, wrapupSettingsValues, nativeSessionSettings, nativeSessionSettingsValues, featureSettings, featureSettingsValues, telemetrySettings, telemetrySettingsValues } from "./shared/settings";
+import { agentHabitsOn, developerSettings, performanceLogOn, performanceSettings, boardViewSettings, ideasSettings, languageSettings, languageSettingsValues, aiLanguageSettings, aiLanguageSettingsValues, deviceLanguageSettings, deviceLanguageValue, modelSettings, onboardingSettings, ideasSettingsValues, statusSettings, statusSettingsValues, wrapupSettings, wrapupSettingsValues, nativeSessionSettings, nativeSessionSettingsValues, featureSettings, featureSettingsValues } from "./shared/settings";
 import { ToolServer } from "./server/tool-server";
 import { SessionReadStore, SessionReadService, daemonNativeAttention } from "./server/session-reads";
 import { readAttentionCount } from "./server/attention-count";
@@ -52,12 +51,9 @@ import { startedByUser, turnPick, userTexts } from "./shared/agent-habits";
 import { turnTimeline } from "./server/turn-timeline";
 import { MemoryService, setMemoryEverywhere, memoryOn } from "./server/memory";
 import { SearchService } from "./server/search";
-import { POSTHOG_KEY, TelemetryService } from "./server/telemetry";
-import { FLOWLY_VERSION } from "./shared/version";
-import { logFailure, reportError, reportRpcErrors, setErrorSink } from "./server/error-report";
+import { logFailure } from "./server/failure-log";
 
-export default function contribute(host: PluginServerContext) {
-  const server = reportRpcErrors(host);
+export default function contribute(server: PluginServerContext) {
   server.registerSettings(boardViewSettings);
   const languagePrefs = server.registerSettings(languageSettings);
   const aiLanguagePrefs = server.registerSettings(aiLanguageSettings);
@@ -71,7 +67,6 @@ export default function contribute(host: PluginServerContext) {
   const nativePrefs = server.registerSettings(nativeSessionSettings);
   const workflowPrefs = server.registerSettings(workflowInsightsSettings);
   const perfPrefs = server.registerSettings(performanceSettings);
-  const telemetryPrefs = server.registerSettings(telemetrySettings);
   const developerPrefs = server.registerSettings(developerSettings);
   // Project memory and Insights as a whole (ONBOARDING-SETUP-SPEC §6); unreadable settings keep the defaults (on).
   const featurePrefs = server.registerSettings(featureSettings);
@@ -90,6 +85,7 @@ export default function contribute(host: PluginServerContext) {
   };
   if (!process.env.FLOWLY_DATA_DIR && !process.env.ULTRA_KANBAN_DATA_DIR) migrateLegacyPluginData();
   const store = new BoardStore(dataDirectory(), { backend: "sqlite" });
+  if (!process.env.FLOWLY_DATA_DIR && !process.env.ULTRA_KANBAN_DATA_DIR) void removeTelemetryState(store.directory);
   // The Next moves card in Paseo's own timeline (NATIVE-SESSION-SPEC §6.1).
   const nextRows = new NextMoveRows(store);
   // The language of everything AI writes (AI-LANGUAGE-SPEC §3); unreadable settings fall back along the chain.
@@ -656,67 +652,6 @@ export default function contribute(host: PluginServerContext) {
       recordLifecycle(store, board, identity, "agent.permission_requested", undefined, { tool: event.request.name || event.request.kind }),
     );
   });
-  // Anonymous daily heartbeat (TELEMETRY-SPEC); off by the setting, DO_NOT_TRACK or FLOWLY_TELEMETRY=0.
-  const ready = <T,>(state: { status: string; values?: unknown } | null, parse: (values: unknown) => T) => parse(state?.status === "ready" ? state.values : {});
-  const telemetry = new TelemetryService({
-    directory: store.directory,
-    env: process.env,
-    apiKey: POSTHOG_KEY,
-    paseoVersion: () => readPaseoVersion(paseoHome()),
-    enabled: async () => ready(await telemetryPrefs.read().catch(() => null), telemetrySettingsValues).enabled,
-    snapshot: async () => {
-      const [language, device, ai, ideasState, nativeState, wrapState, features, workflowState, summary, autoStatus, board] = await Promise.all([
-        languagePrefs.read().catch(() => null),
-        devicePrefs.read().catch(() => null),
-        aiLanguagePrefs.read().catch(() => null),
-        ideasPrefs.read().catch(() => null),
-        nativePrefs.read().catch(() => null),
-        wrapupPrefs.read().catch(() => null),
-        featureValues(),
-        workflowValues(),
-        summaries.settings(),
-        autoStatusOn(),
-        store.view(),
-      ]);
-      const ideasValues = ready(ideasState, ideasSettingsValues);
-      const wrap = ready(wrapState, wrapupSettingsValues);
-      const projects = board.projects.filter((p) => !p.archivedAt);
-      const live = new Set(projects.map((p) => p.id));
-      return {
-        flowlyVersion: FLOWLY_VERSION,
-        language: ready(language, languageSettingsValues).language,
-        deviceLocale: ready(device, deviceLanguageValue),
-        aiLanguage: ready(ai, aiLanguageSettingsValues).aiLanguage,
-        features: {
-          memory: features.memory,
-          insights: features.insights,
-          ideas: ideasValues.ideas,
-          artifacts: ideasValues.artifacts,
-          outsideSessions: ready(nativeState, nativeSessionSettingsValues).outside,
-          autoStatus,
-          autoWrapup: wrap.autoWrapup,
-          archiveOnDelete: wrap.archiveOnDelete,
-          workflowInsights: workflowState.enabled,
-          summary: summary.summaryEnabled,
-        },
-        projects: projects.length,
-        cardsOpen: board.tasks.filter((t) => live.has(t.projectId) && !t.archivedAt && t.status !== "done" && t.status !== "cancelled").length,
-      };
-    },
-    activity: async () => {
-      const board = await store.view();
-      const [events, state] = await Promise.all([
-        Promise.all(board.projects.map((p) => flow.read(p.id).catch(() => []))).then((lists) => lists.flat()),
-        memory.store.read().catch(() => null),
-      ]);
-      return { events, memoryConfirmedAt: (state?.entries ?? []).flatMap((e) => (e.confirmedAt ? [e.confirmedAt] : [])) };
-    },
-  });
-  telemetry.start();
-  setErrorSink((source, error, handled) => void telemetry.reportError(source, error, handled));
-  const onUncaught = (error: Error) => reportError("uncaught", error, false);
-  process.on("uncaughtExceptionMonitor", onUncaught);
-  server.handle(rpc.telemetryStatus, () => ({ forcedOff: telemetry.forcedOff() }));
   console.log("Flowly store ready:", store.directory);
   server.before("agent.session_open", async ({ request }, { paseo }) => {
     tools.attach(paseo);
@@ -744,9 +679,6 @@ export default function contribute(host: PluginServerContext) {
   return () => {
     void store.close().catch((e) => logFailure("Flowly storage: close failed:", e));
     workflow.stop();
-    telemetry.stop();
-    setErrorSink(null);
-    process.off("uncaughtExceptionMonitor", onUncaught);
     stopWorkflowPrefs();
     stopFeaturePrefs();
     folders.stop();

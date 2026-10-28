@@ -49,7 +49,7 @@ import { ToolSecrets, writePrivate } from "./tool-context";
 import { ToolError, toolFailure } from "./tool-error";
 import { cliSource } from "./cli-source";
 import { skillText, workingInstructions } from "./skill-source";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 const maxBody = 262144;
 

@@ -1,6 +1,6 @@
 import type { PaseoApi } from "@getpaseo/client";
 import { lastTurn } from "../shared/summary";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 /**
  * The items of the turn that just ended. Paseo 0.13 sends `timeline: []` with `agent.turn_ended`

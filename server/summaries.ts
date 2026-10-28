@@ -24,7 +24,7 @@ import {
 } from "../shared/summary";
 import { daemonRemoveAgent, type RemoveAgent } from "./summarizer-remove";
 import { runSummaryModels } from "./summary-models";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 export { availableModels } from "./summary-models";
 import { summaryRow } from "../shared/native-session";
 

@@ -5,7 +5,7 @@ import type { PaseoApi } from "@getpaseo/client";
 import { z } from "zod";
 import type { Project } from "../shared/model";
 import { daemonWorkspaceRecovery, type WorkspaceRecovery } from "./workspace-restore";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 export const BACKGROUND_TITLE = "Flowly background";
 

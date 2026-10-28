@@ -42,7 +42,7 @@ import type { SummaryStore } from "./summaries";
 import { runSummaryModels } from "./summary-models";
 import { backgroundWorkspaces, type BackgroundWorkspaces } from "./background-workspace";
 import { daemonRemoveAgent, type RemoveAgent } from "./summarizer-remove";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 const DAY_MS = 86_400_000;
 

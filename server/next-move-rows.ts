@@ -4,7 +4,7 @@ import { openNextMoves, shownMoves } from "../shared/next-moves";
 import type { NextMove } from "../shared/model";
 import { nextRowId, nextRowKind, nextRowVersion, type NextRowData } from "../shared/native-session";
 import { within } from "./summaries";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 const ROW_TIMEOUT_MS = 10_000;
 

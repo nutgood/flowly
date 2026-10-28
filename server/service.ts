@@ -6,7 +6,7 @@ import { putArtifact } from "./artifacts";
 import type { ConnectorService } from "./connectors/service";
 import type { PaseoApi } from "@getpaseo/client";
 import { cpSync, existsSync, renameSync, rmSync } from "node:fs";
-import { lstat, mkdir, readlink, realpath, rmdir, stat, symlink, unlink } from "node:fs/promises";
+import { lstat, mkdir, readdir, readlink, realpath, rm, rmdir, stat, symlink, unlink } from "node:fs/promises";
 import { basename, join, relative, resolve, isAbsolute } from "node:path";
 import { homedir } from "node:os";
 import { randomUUID, createHash } from "node:crypto";
@@ -25,7 +25,7 @@ import { repoMatcher } from "./repos";
 import { memoryContext } from "./memory";
 import type { z } from "zod";
 import type { removeProject as removeProjectRpc, restoreProjectCheck as restoreProjectCheckRpc } from "../shared/rpc";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 import { runPaseo } from "./paseo-cli";
 
 const execute = promisify(execFile);
@@ -96,6 +96,16 @@ export function migrateLegacyPluginData(home = paseoHome()) {
     moved.push(area);
   }
   return moved;
+}
+/**
+ * Deletes what the removed telemetry left behind: the install id (`telemetry.json` and its
+ * `.invalid-*` copies in the data folder) and the host's stored on/off switch. Best effort.
+ */
+export async function removeTelemetryState(directory = dataDirectory(), home = paseoHome()) {
+  const names = await readdir(directory).catch(() => [] as string[]);
+  const targets = names.filter((n) => n === "telemetry.json" || /^telemetry\.json\.(invalid-\d+|[\w-]+\.tmp)$/.test(n)).map((n) => join(directory, n));
+  targets.push(resolve(home, "plugin-settings", PLUGIN_ID, "telemetry.json"));
+  await Promise.all(targets.map((path) => rm(path, { force: true }).catch(() => undefined)));
 }
 /** Fixed parent of plugin-created linked multi-repo project roots (PROJECT-PICKER-SPEC). */
 export const linkedDirectory = () =>

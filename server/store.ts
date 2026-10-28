@@ -29,7 +29,7 @@ import {
   ideaLimits,
   projectOrder,
 } from "../shared/model";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 export { StoreInvalidError };
 

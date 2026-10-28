@@ -26,7 +26,7 @@ import { within } from "./summaries";
 import { runSummaryModels } from "./summary-models";
 import type { NextMoveRows } from "./next-move-rows";
 import { generatedBranchName, resolveWorktreeBaseRef } from "./service";
-import { logFailure } from "./error-report";
+import { logFailure } from "./failure-log";
 
 /** `session-insights.json`: serialized writes, backup, atomic replacement; invalid data is preserved, never reset. */
 export class SessionInsightStore {
